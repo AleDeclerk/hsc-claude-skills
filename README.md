@@ -15,18 +15,18 @@ Each skill encapsulates reference material, code generators, and validation logi
 
 ## Usage
 
-Each folder is a standalone Claude Code skill. Install by pointing Claude Code at the skill directory:
+Each folder is a standalone Claude Code skill. To use them, copy the skill folder into your project's `skills/` directory:
 
 ```bash
-# Install a single skill (e.g. isbt-128)
-claude skills add /path/to/hsc-claude-skills/isbt-128
-
-# Or clone the repo and install from there
+# Clone the repo
 git clone https://github.com/AleDeclerk/hsc-claude-skills.git
-claude skills add ./hsc-claude-skills/hl7-healthcare
+
+# Copy the skills you need into your project
+cp -r hsc-claude-skills/isbt-128 your-project/skills/
+cp -r hsc-claude-skills/hl7-healthcare your-project/skills/
 ```
 
-Once installed, Claude Code will automatically detect and activate the skill when your task matches its domain — for example, any mention of DIN validation triggers `isbt-128`, and any HL7 message work triggers `hl7-healthcare`.
+Claude Code automatically detects skills in the `skills/` directory and activates them when your task matches their domain — for example, any mention of DIN validation triggers `isbt-128`, and any HL7 message work triggers `hl7-healthcare`.
 
 ## License
 
