@@ -1,0 +1,50 @@
+{
+  "skill_name": "epic-fhir",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Necesito implementar el flujo OAuth completo para una app patient-facing contra el sandbox de Epic. Escribime el endpoint /login y /callback en FastAPI que hagan la autenticación OAuth con Epic y me devuelvan el access_token y el patient ID.",
+      "expected_output": "FastAPI route handlers for /login and /callback implementing Epic OAuth standalone launch flow with correct sandbox URLs, required parameters including aud, and CSRF state validation.",
+      "files": [],
+      "expectations": [
+        "The code uses the correct Epic sandbox authorize URL (https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize) and it is actually used in the redirect logic, not just defined as a dead string",
+        "The code uses the correct Epic sandbox token URL (https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token) in an actual HTTP POST call",
+        "The authorize redirect includes the 'aud' parameter set to the FHIR base URL",
+        "The code includes CSRF protection via the 'state' parameter: generates it before redirect AND validates it as a required parameter in the callback (not optional)",
+        "The token exchange uses the POST method (not GET) with Content-Type application/x-www-form-urlencoded",
+        "The callback extracts the 'patient' field from the token response to get the patient FHIR ID",
+        "The code does NOT hardcode the client_id — uses env var or config",
+        "The requested scopes include 'launch/patient' which is required for the token response to include the patient FHIR ID"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Escribime una función async en Python que dado el nombre de un doctor, busque sus slots disponibles para la próxima semana. Usa httpx y el sandbox de Epic.",
+      "expected_output": "An async Python function that chains Practitioner search → Schedule search → Slot search with correct FHIR endpoints and query parameters, with the output of each step feeding into the next.",
+      "files": [],
+      "expectations": [
+        "The function searches practitioners using GET /Practitioner with a name parameter",
+        "The function searches schedules using GET /Schedule with actor=Practitioner/{id} where the practitioner ID comes from the result of the practitioner search (connected flow)",
+        "The function searches slots using GET /Slot with schedule, start (using ge prefix), and status=free parameters, where the schedule ID comes from the result of the schedule search (connected flow)",
+        "The code uses httpx.AsyncClient with async/await",
+        "The code extracts resources from Bundle responses by iterating entry[].resource (not returning raw Bundles)",
+        "The slot search uses date comparison prefixes (ge and/or le) for the date range",
+        "The function returns processed slot data (e.g. list of slot resources or structured data), not raw FHIR Bundle objects"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Estoy tratando de reservar un turno con Epic FHIR y me devuelve 400 Bad Request. Estoy mandando el Appointment resource directamente como body del POST a /Appointment/$book. Qué estoy haciendo mal y cómo lo arreglo? Mostrame el código correcto.",
+      "expected_output": "Explanation that $book requires wrapping the Appointment inside a Parameters resource, plus corrected code showing the proper request format.",
+      "files": [],
+      "expectations": [
+        "The response explains that the Appointment must be wrapped inside a FHIR Parameters resource",
+        "The corrected code shows a Parameters resource with resourceType 'Parameters'",
+        "The Appointment is nested inside parameter[].resource, not sent as the raw body",
+        "The parameter name for the appointment resource is exactly 'appt-resource' in the corrected code",
+        "The corrected code includes slot reference, patient participant, and practitioner participant",
+        "The response mentions that this follows the Argonaut Scheduling IG format"
+      ]
+    }
+  ]
+}

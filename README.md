@@ -12,6 +12,7 @@ Each skill encapsulates reference material, code generators, and validation logi
 | [hl7-healthcare](./hl7-healthcare/) | ✅ Done | HL7 v2 message generation (ADT^A04, ORM^O01, ORU^R01), MLLP transport, FDA 21 CFR 1271 anonymity checks |
 | [loinc-hsc-panel](./loinc-hsc-panel/) | ✅ Done | 31 verified LOINC codes for HSC product test panels, FDA 21 CFR 1271.85 donor screening, default 15-test panel, known bug detection (58410-2 ≠ CD34) |
 | [fact-jacie-audit](./fact-jacie-audit/) | ✅ Done | 34-event FACT/JACIE chain of custody (receipt → infusion → disposal), inspector checklist, 10 missing event gap analysis, 5 known bugs with fixes, FDA 21 CFR 1271.55 retention |
+| [epic-fhir](./epic-fhir/) | ✅ Done | Epic FHIR R4 integration — OAuth 2.0 / SMART on FHIR, Patient/Practitioner/Schedule/Slot/Appointment CRUD, `$find`/`$book` (Argonaut IG), async Python client (httpx + FastAPI), sandbox URLs and test credentials |
 
 ## Usage
 
