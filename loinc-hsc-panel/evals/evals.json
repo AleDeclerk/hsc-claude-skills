@@ -1,0 +1,73 @@
+{
+  "skill_name": "loinc-hsc-panel",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit the default LOINC codes in src/agents/orchestration/nodes/order.py against the LOINC database and FDA requirements. Tell me every bug you find and provide the corrected code.",
+      "expected_output": "Identifies at least 3 bugs: (1) 58410-2 is CBC panel not CD34, correct code is 42808-4, (2) default panel has only 2 tests vs 10-15 required, (3) no LOINC validation. Provides corrected default panel with full FDA-compliant test set.",
+      "assertions": [
+        "Identifies that 58410-2 is CBC panel, NOT CD34 count",
+        "States the correct CD34 LOINC is 42808-4 (absolute count) or 8125-7 (percentage)",
+        "Points out the default panel has only 2 tests, which is FDA non-compliant",
+        "Lists the FDA-mandated infectious disease tests (HIV, HBV, HCV, syphilis, CMV, HTLV)",
+        "Provides a corrected default panel with at least 10 LOINC codes",
+        "Mentions that LOINC validation is missing in config_service.py"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Generate a complete FDA-compliant test panel for an HSC product. List every LOINC code, the test name, specimen type, and whether it's FDA-mandated or FACT-recommended. Group them by category.",
+      "expected_output": "A structured table with 15+ LOINC codes organized into cell characterization, ABO/Rh, infectious disease, and sterility categories. Each code is correctly mapped to its loinc.org long name.",
+      "assertions": [
+        "Includes 42808-4 for CD34 count (NOT 58410-2)",
+        "Includes ABO (882-1) and Rh (10331-7) typing",
+        "Includes all FDA-mandated infectious disease tests per 21 CFR 1271.85",
+        "Includes CMV (22244-8 and/or 5124-3) and HTLV (7942-6) for viable leukocyte-rich products",
+        "Includes at least one sterility culture code (630-4 or 635-3)",
+        "Notes that CMV positive does NOT make the donor ineligible",
+        "Groups tests into at least 3 categories (cell char, ABO/Rh or typing, infectious disease)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write a validate_loinc_codes() function that checks if a list of LOINC codes are valid HSC panel codes. It should return errors for unknown codes and warnings for missing FDA-required categories.",
+      "expected_output": "A Python function that validates against a known set of HSC LOINC codes, checks for FDA-required categories (infectious disease, cell characterization, ABO/Rh), and returns structured errors/warnings.",
+      "assertions": [
+        "Uses a set/dict of valid LOINC codes (at least 15 codes)",
+        "Returns errors for codes not in the valid set",
+        "Checks for missing FDA-required infectious disease codes",
+        "Checks for missing cell characterization codes (at minimum CD34)",
+        "Checks for missing ABO/Rh typing",
+        "Function has type hints",
+        "Does NOT include 58410-2 in the valid set"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Fix the default LOINC panel in src/agents/orchestration/nodes/order.py, update the test data in test_hl7_builder_orm.py and test_anonymity.py, and add a LOINC validation check to config_service.py.",
+      "expected_output": "Updated order.py with correct default panel (42808-4 instead of 58410-2, 15 tests), updated test files, and new validation in config_service.py.",
+      "assertions": [
+        "Replaces 58410-2 with 42808-4 in order.py default panel",
+        "Default panel has at least 10 LOINC codes covering all FDA categories",
+        "Updates test data in test_hl7_builder_orm.py to use 42808-4",
+        "Updates test data in test_anonymity.py to use 42808-4",
+        "Adds LOINC validation logic to config_service.py",
+        "All existing test assertions still pass with updated LOINC codes"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Explain what FDA 21 CFR 1271.85 requires for HSC donor testing. Which tests are mandatory for all HCT/P donors vs only for viable leukocyte-rich products? What LOINC codes map to each requirement?",
+      "expected_output": "Clear explanation distinguishing mandatory-for-all tests (HIV, HBV, HCV, syphilis) from viable-leukocyte-rich tests (CMV, HTLV). Maps each FDA requirement to specific LOINC codes.",
+      "assertions": [
+        "Lists HIV, HBV, HCV, syphilis as mandatory for ALL HCT/P donors",
+        "Lists CMV and HTLV as additional requirements for viable leukocyte-rich products",
+        "States that HSC products ARE viable leukocyte-rich HCT/Ps",
+        "Maps HIV testing to LOINC codes (at least 62469-2 or equivalent)",
+        "Maps HBV testing to at least HBsAg (5195-3) and HBc Ab (16933-4)",
+        "States that CMV positive does NOT disqualify the donor",
+        "References 21 CFR 1271.85 sections (a) and (b)"
+      ]
+    }
+  ]
+}
