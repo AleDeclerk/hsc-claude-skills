@@ -12,7 +12,7 @@ description: >
 
 # HL7 Healthcare Interoperability Skill
 
-Generates, validates, parses, and transmits HL7 v2.x messages. Designed for clinical lab,
+Generates, validates, parses, and transmits HL7 v2.x messages. Designed for clinical lab, 
 stem cell, and hospital integration workflows — including anonymous donor handling (FACT/JACIE, FDA 21 CFR Part 1271).
 
 ---
@@ -82,6 +82,7 @@ python scripts/mllp_sender.py \
   --timeout 10
 ```
 
+<<<<<<< HEAD
 ### 5. Receive incoming messages (MLLP listener)
 
 ```bash
@@ -96,20 +97,46 @@ python scripts/mllp_listener.py \
 python scripts/mllp_listener.py --port 2575 --once
 ```
 
+### 6. Register a donor (feature-flag aware)
+
+```bash
+# Phase 1 — SoftBank backend (default)
+DONOR_BACKEND=softbank python scripts/donor_registration.py \
+  --din "W000055508D001" \
+  --donor-id "DONOR-2026-0042" \
+  --json
+
+# --backend argument takes precedence over DONOR_BACKEND env var
+python scripts/donor_registration.py \
+  --backend softbank \
+  --din "W000055508D001" \
+  --donor-id "DONOR-2026-0042"
+=======
+### 5. Listen for incoming MLLP messages (server mode)
+
+```bash
+# Continuous listener — receives ORU^R01 results pushed by SoftBank (INT-05)
+python scripts/mllp_listener.py --host 0.0.0.0 --port 2575
+
+# Accept one message then exit (useful in pipelines)
+python scripts/mllp_listener.py --port 2575 --once --json
+```
+
 ### 6. Register a donor (feature-flag adapter)
 
 ```bash
 # Phase 1 (current) — routes to SoftBank via ADT^A04
 DONOR_BACKEND=softbank python scripts/donor_registration.py \
   --din W000055508D001 \
-  --donor-id DONOR-2026-0042 \
-  --json
+  --donor-id DONOR-2026-0042
 
 # --backend argument takes precedence over env var
 python scripts/donor_registration.py \
   --backend softbank \
   --din W000055508D001 \
-  --donor-id DONOR-2026-0042
+  --donor-id DONOR-2026-0042 \
+  --json
+>>>>>>> 9634376 (feat: skill-creator evals — 100% with-skill, CB panel fix, improved assertions)
 ```
 
 ---
@@ -126,7 +153,7 @@ When registering an anonymous HSC donor, **strictly follow these field rules**:
 | PID-8 (Sex)   | `U`                        | Unknown — no real sex             |
 | PID-19 (SSN)  | *empty*                    | Never populate                    |
 
-The recipient's MRN must **never appear** in any ADT or ORM segment. It lives only in the
+The recipient's MRN must **never appear** in any ADT or ORM segment. It lives only in the 
 encrypted linking table, hashed as SHA-256 in audit events.
 
 ---
@@ -153,7 +180,51 @@ Do not issue duplicate lab orders; import via ORU^R01.
 For full field-by-field documentation of each message type:
 - ADT^A04 → `references/adt_a04.md`
 - ORM^O01 and ORU^R01 → `references/orm_oru_reference.md`
-- ORU^R01 (Epic/WellSky details) → `references/oru_r01.md`
+
+---
+
+## Listening & ACK Processing
+
+The agent must listen for inbound ORU^R01 messages pushed by SoftBank (integration point INT-05).
+Use `mllp_listener.py` to run a TCP server that receives, acknowledges, and logs these results.
+
+| ACK Code | Meaning              | Listener Behavior                              |
+|----------|----------------------|------------------------------------------------|
+| `AA`     | Application Accept   | Logs success as structured JSON, exits 0       |
+| `AE`     | Application Error    | Logs error with raw content, triggers retry callback, exits 1 |
+| `AR`     | Application Reject   | Logs rejection, escalates to Lab Supervisor, exits 1 |
+
+Exit codes from `mllp_listener.py`:
+- `0` — AA (message accepted)
+- `1` — AE or AR (message rejected or error)
+- `2` — Network error (timeout, connection refused)
+
+For full MLLP framing specification, connection flow diagrams, and retry guidance, see
+`references/mllp_protocol.md`.
+
+---
+
+## Phase 2 — SoftDonor Migration
+
+In Phase 1 (current), donor records are registered in SoftBank as ADT^A04 phantom patient records.
+
+In Phase 2 (post October 2026), LSU will deploy **SoftDonor** — an SCC Soft Computer module
+built specifically for donor data, eliminating the phantom patient workaround.
+
+The `donor_registration.py` adapter provides a clean switch between backends:
+
+```bash
+# Phase 1 — current
+DONOR_BACKEND=softbank python scripts/donor_registration.py --din ... --donor-id ...
+
+# Phase 2 — stub, raises NotImplementedError until API spec arrives
+DONOR_BACKEND=softdonor python scripts/donor_registration.py --din ... --donor-id ...
+# ERROR: SoftDonor API spec pending discovery call with SCC Soft Computer.
+#        Set DONOR_BACKEND=softbank until Phase 2.
+```
+
+When SoftDonor is ready, implement `register_donor_softdonor()` in `donor_registration.py`
+and remove the `NotImplementedError`. No changes to any other script are required.
 
 ---
 
@@ -213,7 +284,7 @@ HL7 v2 over TCP uses MLLP (Minimal Lower Layer Protocol) framing:
 ```
 
 - `<VT>` = `0x0B` — Start Block character
-- `<FS>` = `0x1C` — End Data character
+- `<FS>` = `0x1C` — End Data character  
 - `<CR>` = `0x0D` — Carriage Return
 
 The `mllp_sender.py` script handles framing automatically. For raw integration, see `references/mllp_protocol.md`.
@@ -258,16 +329,24 @@ hl7-healthcare/
 │   ├── validate_hl7.py         ← Validate any HL7 v2 message
 │   ├── parse_hl7.py            ← Parse and inspect HL7 messages
 │   ├── mllp_sender.py          ← Transmit via MLLP over TCP (outbound)
+<<<<<<< HEAD
+│   ├── mllp_listener.py        ← Receive via MLLP over TCP (inbound, ACK)
+│   └── donor_registration.py   ← Feature-flag adapter: SoftBank vs SoftDonor
+├── references/
+│   ├── adt_a04.md              ← ADT^A04 field reference
+│   ├── orm_o01.md              ← ORM^O01 field reference
+│   ├── oru_r01.md              ← ORU^R01 field reference (incl. Epic/WellSky custom fields)
+│   ├── product_panels.md       ← LOINC order panels for PBSC, BM, CB
+│   └── mllp_protocol.md        ← MLLP framing specification
+=======
 │   ├── mllp_listener.py        ← Receive MLLP messages over TCP (inbound, ACK server)
 │   └── donor_registration.py   ← Feature-flag adapter: SoftBank (Phase 1) / SoftDonor (Phase 2)
 ├── references/
 │   ├── adt_a04.md              ← ADT^A04 field reference
 │   ├── orm_oru_reference.md    ← ORM^O01 and ORU^R01 field reference
-│   ├── oru_r01.md              ← ORU^R01 field reference (incl. Epic/WellSky custom fields)
 │   ├── product_panels.md       ← HSC product-type order sets (PBSC / BM / CB)
 │   └── mllp_protocol.md        ← MLLP framing specification and retry guidance
-├── tests/
-│   └── test_all.py             ← Skill tests
+>>>>>>> 9634376 (feat: skill-creator evals — 100% with-skill, CB panel fix, improved assertions)
 └── examples/
     ├── anonymous_donor_registration.hl7
     ├── lab_order_panel_pbsc.hl7

@@ -1,0 +1,55 @@
+{
+  "skill_name": "hl7-healthcare",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Register an anonymous HSC donor as a phantom patient in SoftBank. The donor's ISBT-128 DIN is W000055508D001 and internal ID is DONOR-2026-0042. Generate the HL7 ADT^A04 message and save it to donor_reg.hl7. Then validate it with the anonymous donor check.",
+      "expected_output": "A valid HL7 ADT^A04 message saved to donor_reg.hl7 with ANONYMOUS^DONOR in PID-5, 00010101 in PID-7, U in PID-8, empty PID-19 (no SSN), DIN in PID-3, and validation passing with --check-anonymous flag.",
+      "assertions": [
+        "The generated message has ANONYMOUS^DONOR in the PID-5 (Patient Name) field",
+        "PID-7 (Date of Birth) is 00010101 (placeholder, not a real DOB)",
+        "PID-8 (Administrative Sex) is U (Unknown)",
+        "PID-19 (SSN) is empty — not populated",
+        "The DIN W000055508D001 appears in PID-3 with type code DIN",
+        "The message type is ADT^A04",
+        "The generate_adt_a04.py script (or donor_registration.py) was used to produce the message",
+        "Validation with --check-anonymous passes (exit code 0)",
+        "The recipient MRN MRN123456 does not appear in PID-3 or anywhere in the ADT message"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Route donor lab results to a recipient's Epic chart. Donor is DONOR-2026-0042 with DIN W000055508D001, recipient MRN is MRN123456. Results: CD34+ count 3.2 (10*6/kg, Final, normal), ABO group O (Final, normal), HIV-1/2 Ab Non-reactive (Final, normal). Generate the ORU^R01 message and save it to results.hl7. The message must include the Epic/WellSky DIN identifier OBX segment for donor product routing.",
+      "expected_output": "A valid HL7 ORU^R01 message saved to results.hl7 that includes a DIN OBX with observation identifier DIN^Donor Product Identifier^L, the DIN value in OBX-5, a NTE segment with 'Donor Product' report header, the recipient MRN in PID-3, and the result OBX segments starting at set ID 2.",
+      "assertions": [
+        "The first OBX segment has observation identifier DIN^Donor Product Identifier^L in OBX-3",
+        "OBX-3 of the DIN OBX does NOT use a non-canonical variant such as 99DIN^Donor^L — the code is exactly DIN^Donor Product Identifier^L",
+        "OBX-5 of the DIN OBX contains the value W000055508D001",
+        "A NTE segment is present and contains 'Donor Product'",
+        "The NTE segment contains the DIN W000055508D001",
+        "The MRN MRN123456 does not appear in any ADT or ORM segment — the ORU^R01 message type confirms this is a results message, not a registration or order",
+        "The recipient MRN MRN123456 appears in PID-3 of the ORU^R01 message for Epic chart routing",
+        "Result OBX segments for CD34+, ABO, and HIV are present",
+        "The first result OBX set ID is 2 (DIN OBX occupies set ID 1)",
+        "The generate_oru_r01.py script was used",
+        "The CD34+ count OBX uses LOINC 18207-3, not the incorrect variant 8122-4"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Generate a lab order panel for a Cord Blood (CB) product from donor DONOR-2026-0042, DIN W000055508D001. The NMDP work-up summary already contains validated ABO (883-9) and Rh typing (10331-7) results — suppress those. Save the orders to cb_orders.hl7 and also output JSON so we can verify which tests were placed and which were skipped.",
+      "expected_output": "A valid ORM^O01 message for a CB product with ABO and Rh suppressed. The CB panel includes HbF (4576-5) and TNC (26498-6) in addition to the standard HSC panel tests. JSON output shows orders_placed without 883-9 and 10331-7, and orders_skipped containing those two LOINCs.",
+      "assertions": [
+        "LOINC 883-9 (ABO group) is in orders_skipped, not orders_placed",
+        "LOINC 10331-7 (Rh type) is in orders_skipped, not orders_placed",
+        "The product_type in JSON output is CB",
+        "CD34+ count (18207-3) is in orders_placed",
+        "Sterility culture (600-7) is in orders_placed",
+        "No recipient MRN appears anywhere in the PID segment — the donor is anonymous",
+        "PID-5 (Patient Name) is exactly ANONYMOUS^DONOR",
+        "HbF (LOINC 4576-5) and TNC (LOINC 26498-6) are both in orders_placed",
+        "The --product-type CB and --skip-tests flags were used with generate_orm_o01.py"
+      ]
+    }
+  ]
+}
