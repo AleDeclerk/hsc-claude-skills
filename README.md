@@ -26,7 +26,7 @@ cp -r hsc-claude-skills/isbt-128 your-project/skills/
 cp -r hsc-claude-skills/hl7-healthcare your-project/skills/
 ```
 
-Claude Code automatically detects skills in the `skills/` directory and activates them when your task matches their domain — for example, any mention of DIN validation triggers `isbt-128`, and any HL7 message work triggers `hl7-healthcare`.
+Each skill has a `SKILL.md` with YAML frontmatter that defines trigger keywords in its `description` field. Claude Code loads these skills at session start and activates them when the conversation matches those triggers.
 
 ## License
 
