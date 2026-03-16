@@ -1,0 +1,79 @@
+{
+  "skill_name": "fact-jacie-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit the current HSC agent codebase for FACT/JACIE chain of custody compliance gaps. Tell me which audit events are missing and what an inspector would flag.",
+      "expected_output": "A gap analysis listing the 10 missing events (NMDP_DOCUMENT_RECEIVED, NMDP_DOCUMENT_EXTRACTED, NMDP_DOCUMENT_CONFIRMED, PRODUCT_CONDITION_CHECKED, RESULTS_VALIDATED, RELEASE_CRITERIA_CHECKED, ADMINISTRATION_STARTED, ADMINISTRATION_COMPLETED, ADVERSE_EVENT, PRODUCT_DISPOSED), the PHYSICAL_INSPECTION_FAILED schema mismatch, and incomplete details payloads.",
+      "assertions": [
+        "Identifies at least 8 of the 10 missing events by name",
+        "Flags PHYSICAL_INSPECTION_FAILED as emitted but not in CHECK constraint",
+        "Notes that receipt phase lacks PRODUCT_CONDITION_CHECKED for condition-on-receipt",
+        "Notes that administration phase lacks ADMINISTRATION_STARTED and ADMINISTRATION_COMPLETED",
+        "Mentions ADVERSE_EVENT as mandatory for adverse reaction reporting",
+        "References FACT/JACIE standards or FDA 21 CFR 1271",
+        "Mentions two-person verification requirement for release and bedside",
+        "Identifies incomplete details payloads as a gap"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create the Alembic migration to add the 10 missing FACT/JACIE audit events to the CHECK constraint in audit.audit_events.",
+      "expected_output": "A complete Alembic migration file that drops the existing CHECK constraint and creates a new one with all 34 action_types (24 existing + 10 new).",
+      "assertions": [
+        "Uses ALTER TABLE audit.audit_events DROP CONSTRAINT and ADD CONSTRAINT pattern",
+        "Includes all 24 existing action_types (no accidental removals)",
+        "Adds all 10 new events: NMDP_DOCUMENT_RECEIVED, NMDP_DOCUMENT_EXTRACTED, NMDP_DOCUMENT_CONFIRMED, PRODUCT_CONDITION_CHECKED, RESULTS_VALIDATED, RELEASE_CRITERIA_CHECKED, ADMINISTRATION_STARTED, ADMINISTRATION_COMPLETED, ADVERSE_EVENT, PRODUCT_DISPOSED",
+        "Includes a downgrade function that restores the original constraint",
+        "Has a descriptive docstring mentioning FACT/JACIE compliance",
+        "Uses op.execute() with raw SQL (not op.alter_column)",
+        "File follows the project's migration naming convention (sequential number prefix)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add the ADMINISTRATION_STARTED and ADMINISTRATION_COMPLETED emit_event calls to the appropriate node, with the correct details payload for FACT/JACIE compliance.",
+      "expected_output": "Code changes that emit both events with the required details fields (administered_by, start_time, route, location for STARTED; end_time, volume_infused_ml, complications for COMPLETED).",
+      "assertions": [
+        "Emits ADMINISTRATION_STARTED with resource_type='din' and outcome='success'",
+        "ADMINISTRATION_STARTED details include administered_by, start_time, route, location",
+        "Emits ADMINISTRATION_COMPLETED with resource_type='din' and outcome='success'",
+        "ADMINISTRATION_COMPLETED details include administered_by, end_time, volume_infused_ml, complications",
+        "Both events use the DIN as resource_id",
+        "actor field is set to the administering person (not 'system')",
+        "Events are emitted in the correct node (EIS or a new administration node)",
+        "Includes or references corresponding test cases"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Fix the PHYSICAL_INSPECTION_FAILED bug — it's emitted in results.py but not in the CHECK constraint. Replace it with the FACT/JACIE-compliant event.",
+      "expected_output": "Code change in results.py replacing PHYSICAL_INSPECTION_FAILED with PRODUCT_CONDITION_CHECKED (outcome=failure), enriched with the required details fields.",
+      "assertions": [
+        "Replaces action_type from PHYSICAL_INSPECTION_FAILED to PRODUCT_CONDITION_CHECKED",
+        "Sets outcome to 'failure' (not 'success')",
+        "Includes temperature_celsius in details",
+        "Includes packaging_intact (bool) in details",
+        "Includes accepted=False in details",
+        "Includes rejection_reason in details",
+        "Updates or adds corresponding test case",
+        "Does NOT add PHYSICAL_INSPECTION_FAILED to the CHECK constraint (uses standard naming)"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Explain what a FACT/JACIE inspector checks during an accreditation visit regarding the electronic audit trail. What would they ask to see and what are the most common deficiencies?",
+      "expected_output": "A comprehensive explanation covering traceability walk-through, concurrent recording, two-person verification, deviation management, chain integrity, and record retention, with the top 5 common deficiencies.",
+      "assertions": [
+        "Explains the traceability walk-through (inspector picks a random DIN and traces the full lifecycle)",
+        "Mentions concurrent recording requirement (timestamps must be real-time, not backdated)",
+        "Explains two-person verification for release and bedside verification",
+        "Covers deviation documentation requirement (every escalation must have resolution)",
+        "Mentions chain integrity verification (SHA-256 hash chain)",
+        "States 10-year retention requirement per FDA 21 CFR 1271.55",
+        "Lists at least 3 of the top 5 common deficiencies (incomplete traceability, missing signatures, undocumented deviations)",
+        "References specific action_types that satisfy each requirement"
+      ]
+    }
+  ]
+}

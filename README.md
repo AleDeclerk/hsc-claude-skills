@@ -11,7 +11,7 @@ Each skill encapsulates reference material, code generators, and validation logi
 | [isbt-128](./isbt-128/) | ✅ Done | ISBT 128 DIN validation, parsing, check character (ISO 7064 Mod 37,2), FIN structure per ICCBBA spec |
 | [hl7-healthcare](./hl7-healthcare/) | ✅ Done | HL7 v2 message generation (ADT^A04, ORM^O01, ORU^R01), MLLP transport, FDA 21 CFR 1271 anonymity checks |
 | [loinc-hsc-panel](./loinc-hsc-panel/) | ✅ Done | 31 verified LOINC codes for HSC product test panels, FDA 21 CFR 1271.85 donor screening, default 15-test panel, known bug detection (58410-2 ≠ CD34) |
-| [fact-jacie-audit](./fact-jacie-audit/) | 🔲 Pending | FACT/JACIE audit trail requirements, mandatory chain of custody events, inspection readiness |
+| [fact-jacie-audit](./fact-jacie-audit/) | ✅ Done | 34-event FACT/JACIE chain of custody (receipt → infusion → disposal), inspector checklist, 10 missing event gap analysis, 5 known bugs with fixes, FDA 21 CFR 1271.55 retention |
 
 ## Usage
 
