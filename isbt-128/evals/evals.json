@@ -1,0 +1,74 @@
+{
+  "skill_name": "isbt-128",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit our DIN validator at src/services/din_validator.py against the ISBT-128 spec. Tell me every bug you find and provide the corrected code.",
+      "expected_output": "Identifies at least 3 bugs: (1) regex allows digit as first char of FIN, (2) check character pattern excludes asterisk, (3) DINCase model allows short DINs. Provides corrected regex patterns with [A-Z] first, [A-Z0-9*] for check char, and min_length=13 on the model.",
+      "assertions": [
+        "Identifies that the first character of the FIN must be alpha (A-Z), not alphanumeric",
+        "Points out that DIN_PATTERN and DIN_PATTERN_NO_CHECK both allow digits in position 1",
+        "Identifies that the check character can be asterisk (*) per ISO 7064 Mod 37,2",
+        "The corrected 13-char regex is ^[A-Z][A-Z0-9]{4}\\d{2}\\d{6}$ or equivalent",
+        "The corrected 14-char regex includes [A-Z0-9*] for the check character position",
+        "Mentions that DINCase model needs min_length=13 in addition to max_length=13"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Generate 5 valid test DINs for our unit tests, including one with a check character that is an asterisk. Also generate 5 invalid DINs with explanations of why each is invalid.",
+      "expected_output": "5 valid 13-char DINs all starting with an alpha character, with correct structure. One 14-char DIN where the check character is * (found by computation). 5 invalid DINs covering: digit-first, too short, too long, non-digit year, non-digit sequence.",
+      "assertions": [
+        "All valid DINs have an alphabetic first character (A-Z)",
+        "All valid DINs are exactly 13 characters (or 14 with check char)",
+        "Positions 6-7 are digits in all valid DINs",
+        "Positions 8-13 are digits in all valid DINs",
+        "At least one DIN with check character * is provided and verified with mod_37_2",
+        "Invalid DINs include one starting with a digit",
+        "Invalid DINs include one that is too short (< 13 chars)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write a parse_din() function that takes a validated DIN string (13 chars) and returns a dict with fin, country_indicator, fin_remainder, year_code, and sequence. Include type hints and a docstring explaining the ISBT-128 structure.",
+      "expected_output": "A Python function that slices the 13-char DIN into its ICCBBA-defined components with correct positions: fin=[0:5], country_indicator=[0], fin_remainder=[1:5], year_code=[5:7], sequence=[7:13].",
+      "assertions": [
+        "FIN is extracted from positions 0-4 (din[0:5])",
+        "Country indicator is position 0 (din[0])",
+        "FIN remainder is positions 1-4 (din[1:5])",
+        "Year code is positions 5-6 (din[5:7])",
+        "Sequence number is positions 7-12 (din[7:13])",
+        "The docstring mentions that year_code is for uniqueness, NOT collection date",
+        "Function has type hints (str input, dict return)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Fix the DIN validation in src/services/din_validator.py to comply with the ISBT-128 spec. Also fix the DINCase model in src/models/case.py. Write tests for the new edge cases.",
+      "expected_output": "Updated din_validator.py with corrected regex patterns, updated case.py with min_length=13, and new test cases covering digit-first rejection, asterisk check char acceptance, and short DIN rejection.",
+      "assertions": [
+        "DIN_PATTERN_14 (or equivalent) uses ^[A-Z] for the first character",
+        "DIN_PATTERN_14 includes [A-Z0-9*] for the check character position",
+        "DIN_PATTERN_13 (or equivalent) uses ^[A-Z] for the first character",
+        "DINCase model has both min_length=13 and max_length=13",
+        "A test verifies that a DIN starting with a digit is rejected",
+        "A test verifies that a 14-char DIN with * check character is accepted",
+        "Existing tests still pass (valid DINs like W123426000123 still accepted)"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Explain the difference between a DIN, flag characters, and check character in ISBT-128. How long is each, what character sets do they use, and how do they combine into Data Structure 001?",
+      "expected_output": "Clear explanation: DIN = 13 chars (the unique identifier), flags = 2 chars (not part of DIN, 00 when unused), check char = 1 char (ISO 7064 Mod 37,2, includes * as valid value). Data Structure 001 = 16 chars total = DIN(13) + flags(2) + check(1).",
+      "assertions": [
+        "DIN is stated as exactly 13 characters",
+        "Flag characters are stated as 2 characters that are NOT part of the DIN",
+        "Check character is stated as 1 character calculated using ISO 7064 Mod 37,2",
+        "Data Structure 001 total is stated as 16 characters",
+        "Mentions that flag value is 00 when not used",
+        "Mentions that the check character can be A-Z, 0-9, or asterisk (*)",
+        "States that the check character is calculated from the 13-char DIN only (not including flags)"
+      ]
+    }
+  ]
+}
